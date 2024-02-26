@@ -1,4 +1,7 @@
+import { Comments } from '#/components/molecules/Comments';
+import { authOptions } from '#/constant';
 import { RenderingInfo } from '#/ui/rendering-info';
+import { getServerSession } from 'next-auth';
 import { notFound } from 'next/navigation';
 
 export async function generateStaticParams() {
@@ -16,6 +19,20 @@ export default async function Page({ params }: { params: { id: string } }) {
   );
   const data = (await res.json()) as { title: string; body: string };
 
+  const commentRes = await fetch(
+    'https://jsonplaceholder.typicode.com/comments',
+  );
+
+  const comments = (await commentRes.json()) as {
+    postId: number;
+    id: number;
+    name: string;
+    email: string;
+    body: string;
+  }[];
+
+  const userSession = await getServerSession(authOptions);
+  const isLogin = userSession?.user?.name;
   const isOnDemand = Number(params.id) >= 3;
 
   return (
@@ -29,6 +46,7 @@ export default async function Page({ params }: { params: { id: string } }) {
       <div className="-order-1 col-span-full lg:order-none lg:col-span-2">
         <RenderingInfo type={isOnDemand ? 'ssgod' : 'ssg'} />
       </div>
+      {isLogin ? <Comments data={comments} /> : <div>No Login</div>}
     </div>
   );
 }
